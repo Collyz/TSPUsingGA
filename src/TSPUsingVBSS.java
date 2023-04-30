@@ -1,9 +1,11 @@
 import java.util.Arrays;
 import java.util.SplittableRandom;
+import java.lang.Math;
 
 public class TSPUsingVBSS {
     private int[] tour;
     private int[] heuristicValues;
+    private double[] probabilities;
     private SplittableRandom sRand;
     private final double[] xValues;
     private final double[] yValues;
@@ -12,6 +14,7 @@ public class TSPUsingVBSS {
     public TSPUsingVBSS(int numOfCities, double[] xValues, double[]yValues, int confidenceInHeuristic){
         this.tour = new int[numOfCities];
         this.heuristicValues = new int[numOfCities];
+        probabilities = new double[numOfCities];
         sRand = new SplittableRandom();
         this.xValues = xValues;
         this.yValues = yValues;
@@ -86,6 +89,54 @@ public class TSPUsingVBSS {
     public void vbssSelection(){
         //Use B
         //Use heuristicValues private array
+
+        //Calculate denominator
+        double denom = 0;
+        for (int i = 1; i < heuristicValues.length; i++){
+            denom += 1.0 / Math.pow(heuristicValues[i], B);
+        }
+
+        //generate probabilities array
+        for (int i = 0; i < heuristicValues.length; i++){
+            probabilities[i] = (1.0 / Math.pow(heuristicValues[i], B)) / denom;
+        }
+
+        //begin constructing a new tour
+        int[] tempTour = new int[tour.length];
+        int tempTourInc = 0;
+        int[] visited = new int[tour.length];
+
+        int visitedCitiesCounter = 0; //increment this each time a new city is found
+        double rand;
+
+        while(visitedCitiesCounter < tempTour.length){
+            rand = sRand.nextDouble();
+
+            //if the rand number is below the probability, then that city gets picked
+            for (int i = 0; i < tempTour.length; i++){  //this doesn't work, you need to account for the fact that each probability has a range
+                                                        //My best bet for a solution would be to sort the probabilities and keep the indexes in an array
+                if (rand < probabilities[i]){
+                    if (visited[i] > 0){    //if it's already in the loop, go back to generating another
+                        break;
+                    }
+
+                    visitedCitiesCounter++; //incrementing counter
+                    visited[i]++;
+                    tempTour[tempTourInc++] = i;
+                    break;
+                }
+            }
+        }
+
+
+
+        /*
+        The plan:
+            Need to keep track of cities that have been visited and those that haven't
+            Need to adjust heuristic values to account for it all
+
+         */
+
     }
 
     /**
@@ -135,5 +186,11 @@ public class TSPUsingVBSS {
      */
     public void printTour(){
         System.out.println(Arrays.toString(this.tour));
+    }
+
+    public void run(){
+
+        generateNewTour();
+        generateCost(tour);
     }
 }
