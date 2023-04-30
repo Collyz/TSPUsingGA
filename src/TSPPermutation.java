@@ -6,7 +6,7 @@ import java.util.SplittableRandom;
 public class TSPPermutation {
     private int[][] population;
     private double[] fitness;
-    private SplittableRandom sRand;
+    private final SplittableRandom sRand;
     private double[] xValues;
     private double[] yValues;
 
@@ -24,21 +24,6 @@ public class TSPPermutation {
         this.sRand = new SplittableRandom();
         this.xValues = x;
         this.yValues = y;
-
-
-        int[] defaultTour = new int[numberOfCities];
-        for(int i = 0; i < numberOfCities; i++){
-            defaultTour[i] = i;
-        }
-        for(int i = 0; i < population; i++){
-            int[] defaultTourCopy = Arrays.copyOf(defaultTour, numberOfCities);
-            for(int j = 0; j < numberOfCities; j++){
-                int randomIndex1 = sRand.nextInt(0, numberOfCities);
-                int randomIndex2 = sRand.nextInt(0, numberOfCities);
-                swap(defaultTourCopy, randomIndex1, randomIndex2);
-            }
-            this.population[i] = defaultTourCopy;
-        }
     }
 
     public void generateNewPopulation(){
@@ -49,7 +34,7 @@ public class TSPPermutation {
         }
         for(int i = 0; i < 100; i++){
             int[] defTourCopy = Arrays.copyOf(defaultTour, numberOfCities);
-            for(int j = 0; j < 1000; j++){
+            for(int j = 0; j < population[0].length; j++){
                 int randomIndex1 = sRand.nextInt(numberOfCities);
                 int randomIndex2 = sRand.nextInt(numberOfCities);
                 swap(defTourCopy, randomIndex1, randomIndex2);
@@ -67,6 +52,13 @@ public class TSPPermutation {
      */
     private void swap(int[] array, int pos1, int pos2){
         int temp = array[pos1];
+        array[pos1] = array[pos2];
+        array[pos2] = temp;
+    }
+
+
+    private void swap(double[] array, int pos1, int pos2){
+        double temp = array[pos1];
         array[pos1] = array[pos2];
         array[pos2] = temp;
     }
@@ -97,11 +89,11 @@ public class TSPPermutation {
 
     public int generateCostOfIndividual(int[] individual){
         int totalCost = 0;
-        for (int j = 0; j < individual.length; j++) {
-            int city1 = individual[j];
+        for (int i = 0; i < individual.length; i++) {
+            int city1 = individual[i];
             int city2;
-            if ((j + 1) < individual.length) {
-                city2 = individual[j + 1];
+            if ((i + 1) < individual.length) {
+                city2 = individual[i + 1];
             } else {
                 city2 = individual[0];
             }
@@ -162,19 +154,16 @@ public class TSPPermutation {
         int[][] nextGeneration = new int[population.length][];
         double N = 1.0 / (double) nextGeneration.length;
         double randomValue = sRand.nextDouble(N);
-
         double bound = 0.0;
         int index = 0;
 
         for (int i = 0; i < fitness.length; i++) {
             bound += fitness[i];
-
             while (bound > randomValue) {
                 nextGeneration[index++] = population[i];
                 randomValue += N;
             }
         }
-
         population = nextGeneration;
     }
 
@@ -254,6 +243,41 @@ public class TSPPermutation {
         array[indexTwo] = temp;
     }
 
+    private void reversalMutation(int[] array){
+        int indexOne = 0;
+        int indexTwo = 0;
+        while(indexOne == indexTwo){
+            indexOne = sRand.nextInt(array.length);
+            indexTwo = sRand.nextInt(array.length);
+        }
+        if(indexOne> indexTwo){
+            for(int i = indexTwo; i < indexOne; i++){
+
+            }
+        }
+    }
+
+    private void reversalMutation2(int[] array) {
+        int indexOne = sRand.nextInt(array.length);
+        int indexTwo = sRand.nextInt(array.length);
+        while (indexOne == indexTwo) {
+            indexTwo = sRand.nextInt(array.length);
+        }
+        if (indexOne > indexTwo) {
+            int temp = indexOne;
+            indexOne = indexTwo;
+            indexTwo = temp;
+        }
+        int[] reversed = new int[indexTwo - indexOne + 1];
+        for (int i = 0; i < reversed.length; i++) {
+            reversed[i] = array[indexTwo - i];
+        }
+        for (int i = indexOne; i <= indexTwo; i++) {
+            array[i] = reversed[i - indexOne];
+        }
+    }
+
+
     /**
      * Get the current population as a 2D array where rows are each individual and columns are the indexes
      * into the path of the individual solution
@@ -276,15 +300,23 @@ public class TSPPermutation {
     }
 
     /**
-     *
+     * Runs the Permutation Genetic Algorithm given parameters
      * @param crossoverRate
      * @param mutationRate
      * @param numOfGenerations
      */
     public void run(double crossoverRate, double mutationRate, int numOfGenerations){
+        int best = Integer.MAX_VALUE;
+        generateNewPopulation();
+        System.out.println(generateBestPopCost());
         for(int i = 0; i < numOfGenerations; i++) {
             double randNum = sRand.nextDouble();
+            if(i > 1000 && i < 5000){
+                mutationRate += .01;
+            }
             if (randNum < crossoverRate) {
+                int randTour = sRand.nextInt(population.length);
+                reversalMutation(population[randTour]);
                 int randTour1 = sRand.nextInt(population.length);
                 int randTour2 = sRand.nextInt(population.length);
                 cycleCrossOver(population[randTour1], population[randTour2]);
@@ -293,11 +325,14 @@ public class TSPPermutation {
                 int randTour1 = sRand.nextInt(population.length);
                 singleSwapMutation(population[randTour1]);
             }
-            generateBestPopCost();
+            int temp = generateBestPopCost();
+            if(temp < best){
+                best = temp;
+            }
             calculateFitness();
-            fitnessProportionateSelection();
+            stochasticUniversalSampling();
         }
-
+        System.out.println("Best found using SUS: " + best);
     }
 
 

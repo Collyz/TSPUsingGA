@@ -1,10 +1,11 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.SplittableRandom;
 import java.lang.Math;
 
 public class TSPUsingVBSS {
     private int[] tour;
-    private int[] heuristicValues;
+    private ArrayList<Integer> heuristicValues;
     private double[] probabilities;
     private SplittableRandom sRand;
     private final double[] xValues;
@@ -13,7 +14,7 @@ public class TSPUsingVBSS {
 
     public TSPUsingVBSS(int numOfCities, double[] xValues, double[]yValues, int confidenceInHeuristic){
         this.tour = new int[numOfCities];
-        this.heuristicValues = new int[numOfCities];
+        heuristicValues = new ArrayList<>();
         probabilities = new double[numOfCities];
         sRand = new SplittableRandom();
         this.xValues = xValues;
@@ -52,53 +53,95 @@ public class TSPUsingVBSS {
         array[pos2] = temp;
     }
 
-    /**
-     * Defined heuristic based on distance from a random city.
-     */
-    public void distanceBasedHeuristic(){
-        int sum = 0;
-        int[] costs = new int[tour.length];
-        costs[0] = 0;
-        for(int i = 1; i < costs.length; i++){
-            costs[i] = costBetweenTwoPoints(0, i);
-            sum += costs[i];
-        }
-        heuristicValues = rankArray(costs);
+    private void swap(double[] array, int pos1, int pos2){
+        double temp = array[pos1];
+        array[pos1] = array[pos2];
+        array[pos2] = temp;
     }
 
     /**
-     * Helper method for the distanceBasedHeuristic method
-     * @param costs - The array of costs
-     * @return - An array of ranks assigned to all cities based on distance from first city.
+     * Defined heuristic based on distance from start city.
      */
-    private int[] rankArray(int[] costs) {
+    public int[] costFromStartCity(int numOfCities){
+        int costs[] = new int[numOfCities];
+        int startingCity = tour.length - numOfCities;
+        int cityCounter = startingCity;
+        for(int i = 0; i < costs.length; i++){
+            costs[i] = costBetweenTwoPoints(tour[startingCity], tour[cityCounter]);
+            cityCounter++;
+        }
+        return costs;
+    }
+
+    public double inverseHeuristicSum(int[] costs) {
         int[] copyOfCosts = Arrays.copyOf(costs, costs.length);
         Arrays.sort(copyOfCosts);
 
-        int[] ranks = new int[costs.length];
+        double[] heuristicArray = new double[costs.length];
         for (int i = 0; i < costs.length; i++) {
-            int rank = Arrays.binarySearch(copyOfCosts, costs[i]);
-            ranks[i] = rank;
+            int heuristicValue = Arrays.binarySearch(copyOfCosts, costs[i]);
+            double temp = 1.0/(double)heuristicValue;
+            heuristicArray[i] = temp;
+            heuristicValues.add(heuristicValue);
+        }
+        double sum = Arrays.stream(heuristicArray).sum();
+        return sum;
+    }
+
+    public int[] getHeuristic(int[] costs){
+        int[] ranks = new int[costs.length];
+        int[] copyOfCosts = Arrays.copyOf(costs, costs.length);
+        quickSort(copyOfCosts, 0, costs.length-1);
+        for(int i = 0; i < costs.length; i++){
+            for(int j = 0; j < costs.length; j++){
+                if(copyOfCosts[i] == costs[j]){
+                    ranks[i] = j;
+                }
+            }
         }
         return ranks;
+
     }
+
+    public void quickSort(int[] array, int left, int right) {
+        if (left < right) {
+            int pivotIndex = partition(array, left, right);
+            quickSort(array, left, pivotIndex - 1);
+            quickSort(array, pivotIndex + 1, right);
+        }
+    }
+
+    public int partition(int[] arr, int left, int right) {
+        int pivot = arr[right];
+        int i = left - 1;
+        for (int j = left; j < right; j++) {
+            if (arr[j] < pivot) {
+                i++;
+                int temp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = temp;
+            }
+        }
+        int temp = arr[i + 1];
+        arr[i + 1] = arr[right];
+        arr[right] = temp;
+        return i + 1;
+    }
+
 
     /**
      * Selects new tour based on VBSS probability function
      */
     public void vbssSelection(){
-        //Use B
-        //Use heuristicValues private array
-
         //Calculate denominator
         double denom = 0;
-        for (int i = 1; i < heuristicValues.length; i++){
-            denom += 1.0 / Math.pow(heuristicValues[i], B);
+        for (int i = 1; i < heuristicValues.size(); i++){
+            denom += 1.0 / Math.pow(heuristicValues.get(i), B);
         }
 
         //generate probabilities array
-        for (int i = 0; i < heuristicValues.length; i++){
-            probabilities[i] = (1.0 / Math.pow(heuristicValues[i], B)) / denom;
+        for (int i = 0; i < heuristicValues.size(); i++){
+            probabilities[i] = (1.0 / Math.pow(heuristicValues.get(i), B)) / denom;
         }
 
         //begin constructing a new tour
@@ -128,21 +171,12 @@ public class TSPUsingVBSS {
             }
         }
 
-
-
-        /*
-        The plan:
-            Need to keep track of cities that have been visited and those that haven't
-            Need to adjust heuristic values to account for it all
-
-         */
-
     }
 
     /**
      * Generate the cost of the total tour
-     * @param tour
-     * @return
+     * @param tour The current tour
+     * @return The total cost of the tour
      */
     public int generateCost(int[] tour){
         int totalCost = 0;
@@ -193,4 +227,14 @@ public class TSPUsingVBSS {
         generateNewTour();
         generateCost(tour);
     }
+
+    public void run(int iterations){
+        vbssSelection();
+        System.out.println(generateCost(this.tour));
+        for(int i = 0; i < iterations; i++){
+            vbssSelection();
+        }
+        System.out.println(generateCost(this.tour));
+    }
+
 }
