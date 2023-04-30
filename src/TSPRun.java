@@ -14,7 +14,7 @@ public class TSPRun {
         System.out.println(min);*/
 
         System.out.println(tspPerm.generateBestPopCost());
-        tspPerm.run(0.1, 0.01, 100);
+        tspPerm.run(0.1, 0.01, 1000);
         System.out.println(tspPerm.generateBestPopCost());
     }
 }

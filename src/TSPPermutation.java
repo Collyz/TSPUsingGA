@@ -5,7 +5,7 @@ import java.util.SplittableRandom;
 
 public class TSPPermutation {
     private int[][] population;
-    private double[] selectionProb;
+    private double[] fitness;
     private SplittableRandom sRand;
     private double[] xValues;
     private double[] yValues;
@@ -20,7 +20,7 @@ public class TSPPermutation {
     public TSPPermutation(int numberOfCities, int population, double[] x, double[] y){
         //Initialization of private objects
         this.population = new int[population][numberOfCities];
-        this.selectionProb = new double[population];
+        this.fitness = new double[population];
         this.sRand = new SplittableRandom();
         this.xValues = x;
         this.yValues = y;
@@ -72,7 +72,7 @@ public class TSPPermutation {
     }
 
     /**
-     * Generates the cost of every individual in the population
+     * Generates the cost of every tour in the population
      * @return The best (lowest) cost in the current population
      */
     public int generateBestPopCost(){
@@ -89,7 +89,6 @@ public class TSPPermutation {
                 }
                 cost += costBetweenTwoPoints(city1, city2);
             }
-            selectionProb[i] = cost;
             //System.out.println("Individual " + i + ":" +tempSum);
             best = Math.min(best, cost);
         }
@@ -130,18 +129,22 @@ public class TSPPermutation {
      * Calc
      */
     public void calculateFitness() {
+        //The fitness array is the cost of each tour for now
+        for(int i = 0; i < population.length; i++){
+            fitness[i] = generateCostOfIndividual(population[i]);
+        }
+
         double sum = 0;
-        // Calculate the inverse of each number
-        for (int i = 0; i < this.selectionProb.length; i++) {
-            selectionProb[i] = 1.0 / selectionProb[i];
-            sum += selectionProb[i];
+        //Then calculate the inverse of each tour cost
+        for (int i = 0; i < this.fitness.length; i++) {
+            fitness[i] = 1.0 / fitness[i];
+            sum += fitness[i];
         }
 
-        // Normalize the fitness values
-        for (int i = 0; i < selectionProb.length; i++) {
-            selectionProb[i] /= sum;
+        //Normalizing the fitness of each tour cost
+        for (int i = 0; i < fitness.length; i++) {
+            fitness[i] = fitness[i]/sum;
         }
-
     }
 
     /**
@@ -163,8 +166,8 @@ public class TSPPermutation {
         double bound = 0.0;
         int index = 0;
 
-        for (int i = 0; i < selectionProb.length; i++) {
-            bound += selectionProb[i];
+        for (int i = 0; i < fitness.length; i++) {
+            bound += fitness[i];
 
             while (bound > randomValue) {
                 nextGeneration[index++] = population[i];
@@ -174,6 +177,26 @@ public class TSPPermutation {
 
         population = nextGeneration;
     }
+
+    public void fitnessProportionateSelection(){
+        int[][] nextGeneration = new int[population.length][];
+        double partialSum = fitness[0];
+        double totalSum = 0;
+        for(int i = 0; i < fitness.length; i++){
+            totalSum += fitness[i];
+        }
+        double randNum = sRand.nextDouble();
+        for(int i = 0; i < nextGeneration.length; i++){
+            partialSum += fitness[i] ;
+            if(partialSum >= randNum){
+                nextGeneration[i] = population[i];
+                break;
+            }
+        }
+
+        population = nextGeneration;
+    }
+
 
     /**
      * Performs cycle crossover on the
@@ -252,6 +275,12 @@ public class TSPPermutation {
         }
     }
 
+    /**
+     *
+     * @param crossoverRate
+     * @param mutationRate
+     * @param numOfGenerations
+     */
     public void run(double crossoverRate, double mutationRate, int numOfGenerations){
         for(int i = 0; i < numOfGenerations; i++) {
             double randNum = sRand.nextDouble();
@@ -264,11 +293,9 @@ public class TSPPermutation {
                 int randTour1 = sRand.nextInt(population.length);
                 singleSwapMutation(population[randTour1]);
             }
-
-            sortPopulation();
             generateBestPopCost();
             calculateFitness();
-            stochasticUniversalSampling();
+            fitnessProportionateSelection();
         }
 
     }
