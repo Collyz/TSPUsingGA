@@ -59,6 +59,10 @@ public class TSPReader {
         return this.yCords;
     }
 
+    public int getNumOfCities(){
+        return this.numOfCities;
+    }
+
     public String getFileName(){
         return this.filename;
     }
