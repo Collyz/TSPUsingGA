@@ -14,13 +14,10 @@ public class TSPPermutation {
      * Constructor that initializes several important parameters for TSP problem as a permutation
      * @param numberOfCities - The number of cities, taken from file
      * @param population - The size of the population
-     * @param selectionNum - The selection rate
-     * @param crossoverNum - The crossover rate
-     * @param mutationNum - The mutation rate
      * @param x - Latitude values from file
      * @param y - Longitude value from file
      */
-    public TSPPermutation(int numberOfCities, int population, double selectionNum, double crossoverNum, double mutationNum, double[] x, double[] y){
+    public TSPPermutation(int numberOfCities, int population, double[] x, double[] y){
         //Initialization of private objects
         this.population = new int[population][numberOfCities];
         this.selectionProb = new double[population];
@@ -178,9 +175,6 @@ public class TSPPermutation {
         population = nextGeneration;
     }
 
-
-
-
     /**
      * Performs cycle crossover on the
      * @param parent1 - Parent 1
@@ -259,14 +253,14 @@ public class TSPPermutation {
     }
 
     public void run(double crossoverRate, double mutationRate, int numOfGenerations){
-        for(int i = 0; i < numOfGenerations; i++){
+        for(int i = 0; i < numOfGenerations; i++) {
             double randNum = sRand.nextDouble();
-            if(randNum < crossoverRate){
+            if (randNum < crossoverRate) {
                 int randTour1 = sRand.nextInt(population.length);
                 int randTour2 = sRand.nextInt(population.length);
                 cycleCrossOver(population[randTour1], population[randTour2]);
             }
-            if(mutationRate < crossoverRate){
+            if (mutationRate < crossoverRate) {
                 int randTour1 = sRand.nextInt(population.length);
                 singleSwapMutation(population[randTour1]);
             }
@@ -276,7 +270,6 @@ public class TSPPermutation {
             calculateFitness();
             stochasticUniversalSampling();
         }
-        printPopulation();
 
     }
 
