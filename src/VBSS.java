@@ -4,23 +4,21 @@ import java.util.SplittableRandom;
 
 public class VBSS {
     private int[] tour;
-    private int[] heuristicValues;
-    private double[] probabilites;
     private SplittableRandom sRand;
     private final double[] xValues;
     private final double[] yValues;
     private int B;
+    private int currentBest;
 
     public VBSS(int numCities, int B, double[] xValues, double[] yValues){
         this.tour = new int[numCities];
-        this.heuristicValues = new int[numCities];
-        this.probabilites = new double[numCities];
         this.sRand = new SplittableRandom();
         this.xValues = xValues;
         this.yValues = yValues;
         for(int i = 0; i < tour.length; i++){
             tour[i] = i;
         }
+        currentBest = tour[0];
     }
 
     public void generateNewTour(){
@@ -154,19 +152,19 @@ public class VBSS {
         int[] newTour = new int[tour.length];
         double cumulativeProb;
         newTour[0] = tour[0];
-        int cityAddCount = 1;
-        ArrayList<Integer> citiesAdded = new ArrayList<>();
-        citiesAdded.add(tour[0]);
         double[] probs = setProbabilities();
         this.tour = removeAtIndex(this.tour, 0);
         for(int i = 1; i < newTour.length; i++){
             double randNum = sRand.nextDouble();
             cumulativeProb = 0;
-            for(int j = 0; j < tour.length; j++){
+            for (int j = 0; j < tour.length; j++) {
+                if(tour.length == 1){
+                    newTour[i] = tour[0];
+                    break;
+                }
                 cumulativeProb += probs[j];
-                if(randNum < cumulativeProb && randNum > (cumulativeProb - probs[j])){
+                if (randNum < cumulativeProb && randNum > (cumulativeProb - probs[j])) {
                     newTour[i] = tour[j];
-                    cityAddCount++;
                     this.tour = removeAtIndex(this.tour, j);
                     probs = setProbabilities();
                     break;
@@ -176,6 +174,38 @@ public class VBSS {
         }
         this.tour = newTour;
     }
+
+    public void vbssNewTour2(){
+        int[] newTour = new int[tour.length];
+        double[] probs = setProbabilities();
+        double cumulativeProb;
+        // Step 1: Select a starting city
+        int currentCity = tour[0];
+        newTour[0] = currentCity;
+
+        // Step 2: Remove starting city from original tour
+        tour = removeAtIndex(tour, 0);
+
+        // Step 3-7: Select remaining cities based on heuristic values
+        for(int i = 1; i < newTour.length; i++){
+            double rand = sRand.nextDouble();
+            cumulativeProb = 0;
+
+            for(int j = 0; j < tour.length; j++){
+                if(tour[j] == 0) continue; // skip over zero values
+                cumulativeProb += probs[j];
+                if(cumulativeProb >= rand){
+                    newTour[i] = tour[j];
+                    tour = removeAtIndex(tour, j);
+                    break;
+                }
+            }
+        }
+
+        // Set the new tour
+        tour = newTour;
+    }
+
 
     public void printTour(){
         System.out.print(Arrays.toString(this.tour));

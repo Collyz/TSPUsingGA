@@ -1,7 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 
 public class TSPReader {
     private double[] xCords;
@@ -16,30 +15,26 @@ public class TSPReader {
         this.filename = filename;
     }
 
-    public void readFile() throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(this.filename));
-        String currentLine;
-        boolean coordinateFlag = false;
-        while((currentLine = br.readLine()) != null){
-            String[] temp = currentLine.split(" ");
-            for(String word: temp){
-                if(word.equals("DIMENSION:")){
-                    numOfCities = Integer.parseInt(temp[1]);
+    public void readFile(){
+        try (BufferedReader br = new BufferedReader(new FileReader(this.filename))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.startsWith("DIMENSION")) {
+                    numOfCities = Integer.parseInt(line.split(":")[1].trim());
+                } else if (line.startsWith("NODE_COORD_SECTION")) {
                     xCords = new double[numOfCities];
                     yCords = new double[numOfCities];
+                    for (int i = 0; i < numOfCities; i++) {
+                        line = br.readLine();
+                        String[] coords = line.split("\\s+");
+                        xCords[i] = Double.parseDouble(coords[1]);
+                        yCords[i] = Double.parseDouble(coords[2]);
+                    }
+                    break; // stop reading file once coordinates are parsed
                 }
-                if(word.equals("NODE_COORD_SECTION")){
-                    coordinateFlag = true;
-                    currentLine = br.readLine();
-                }
-                if(coordinateFlag){
-                    temp = currentLine.split(" ");
-                    int tempIndex = Integer.parseInt(temp[0])-1;
-                    xCords[tempIndex] = Double.parseDouble(temp[1]);
-                    yCords[tempIndex] = Double.parseDouble(temp[2]);
-                }
-
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
