@@ -1,3 +1,6 @@
+/**
+ * Group Members: Mohammed Mowla, Brendan Lee
+ */
 import java.util.Arrays;
 import java.util.SplittableRandom;
 
@@ -165,7 +168,6 @@ public class VBSS {
         return newTour;
     }
 
-
     /**
      * Method that performs the actual Value Biased Stochastic Sampling
      */
@@ -232,7 +234,7 @@ public class VBSS {
     /**
      * Run method created to allow for multiple iterations of VBSS
      * Chooses the best value and array
-     * @param iterations
+     * @param iterations - The number of runs to run VBSS for
      */
     public void run(int iterations){
         //Generate a random tour or else the default tour is 1,2,3... etc. will be the tour
@@ -246,8 +248,14 @@ public class VBSS {
             int temp = getTourCost();
             if(temp < best){
                 best = temp;
+                bestTour = this.tour;
             }
         }
-        System.out.println("The best solution cost: " + best);
+        System.out.println(best);
+        String print = "";
+        for(int i = 0; i < bestTour.length; i++){
+            print += (bestTour[i] + 1) + " ";
+        }
+        System.out.println(print);
     }
 }

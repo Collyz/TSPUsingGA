@@ -1,3 +1,6 @@
+/**
+ * Group Members: Mohammed Mowla, Brendan Lee
+ */
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
