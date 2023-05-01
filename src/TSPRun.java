@@ -5,9 +5,7 @@ public class TSPRun {
         //String filename = args[0];
         TSPReader reader = new TSPReader("dj38.tsp");
         reader.readFile();
-        VBSS vbss = new VBSS(reader.getNumOfCities(), 1, reader.getXCords(), reader.getYCords());
-        vbss.run(100000);
-//        TSPPermutation tspPermutation = new TSPPermutation(reader.getNumOfCities(),100, reader.getXCords(), reader.getYCords());
-//        tspPermutation.run(0.3, 0.16, 100000);
+        VBSS vbss = new VBSS(reader.getNumOfCities(), 4, reader.getXCords(), reader.getYCords());
+        vbss.run(10000);
     }
 }

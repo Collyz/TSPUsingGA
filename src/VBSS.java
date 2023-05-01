@@ -1,24 +1,23 @@
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.SplittableRandom;
 
 public class VBSS {
     private int[] tour;
-    private SplittableRandom sRand;
+    private final SplittableRandom sRand;
     private final double[] xValues;
     private final double[] yValues;
     private int B;
-    private int currentBest;
 
     public VBSS(int numCities, int B, double[] xValues, double[] yValues){
         this.tour = new int[numCities];
         this.sRand = new SplittableRandom();
         this.xValues = xValues;
         this.yValues = yValues;
+        this.B = B;
         for(int i = 0; i < tour.length; i++){
             tour[i] = i;
         }
-        currentBest = tour[0];
+
     }
 
     public void generateNewTour(){
@@ -78,7 +77,7 @@ public class VBSS {
         // Generate ranks based on the sorted array
         for(int i = 0; i < costs.length; i++){
             int heuristicVal = Arrays.binarySearch(costs, distBetweenCities(tour[0], tour[i]));
-            ranks[i] = heuristicVal;
+            ranks[i] = (int)Math.pow(heuristicVal, B);
         }
         return ranks;
     }
@@ -182,6 +181,7 @@ public class VBSS {
         best = getTourCost();
         for(int i = 0; i < iterations; i++){
             vbssNewTour();
+            printTour();
             int temp = getTourCost();
             if(temp < best){
                 best = temp;
