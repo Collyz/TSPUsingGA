@@ -112,25 +112,6 @@ public class VBSS {
         return probs;
     }
 
-    public int[] removeValue(int[] tour, int value) {
-        int count = 0;
-        for (int item : tour) {
-            if (item != value) {
-                count++;
-            }
-        }
-
-        int[] newTour = new int[count];
-        int j = 0;
-        for (int k : tour) {
-            if (k != value) {
-                newTour[j] = k;
-                j++;
-            }
-        }
-        return newTour;
-    }
-
     public int[] removeAtIndex(int[] tour, int index) {
         if (index < 0 || index >= tour.length) {
             throw new IndexOutOfBoundsException("Index " + index + " out of bounds for array of length " + tour.length);
@@ -149,12 +130,11 @@ public class VBSS {
 
 
     public void vbssNewTour(){
+        //Initializing an empty new tour
         int[] newTour = new int[tour.length];
-        double cumulativeProb;
-        newTour[0] = tour[0];
-        double[] probs = setProbabilities();
-        this.tour = removeAtIndex(this.tour, 0);
-        for(int i = 1; i < newTour.length; i++){
+        double cumulativeProb; //The cumulative probability
+        double[] probs = setProbabilities(); //Determine the probabilities
+        for(int i = 0; i < newTour.length; i++){
             double randNum = sRand.nextDouble();
             cumulativeProb = 0;
             for (int j = 0; j < tour.length; j++) {
@@ -164,46 +144,29 @@ public class VBSS {
                 }
                 cumulativeProb += probs[j];
                 if (randNum < cumulativeProb && randNum > (cumulativeProb - probs[j])) {
-                    newTour[i] = tour[j];
-                    this.tour = removeAtIndex(this.tour, j);
+                    int tempCityValue = tour[j];
+                    newTour[i] = tour[0];
+                    this.tour = removeAtIndex(this.tour, 0);
+                    swapValue(this.tour,tempCityValue);
                     probs = setProbabilities();
                     break;
                 }
             }
-
         }
         this.tour = newTour;
     }
 
-    public void vbssNewTour2(){
-        int[] newTour = new int[tour.length];
-        double[] probs = setProbabilities();
-        double cumulativeProb;
-        // Step 1: Select a starting city
-        int currentCity = tour[0];
-        newTour[0] = currentCity;
 
-        // Step 2: Remove starting city from original tour
-        tour = removeAtIndex(tour, 0);
-
-        // Step 3-7: Select remaining cities based on heuristic values
-        for(int i = 1; i < newTour.length; i++){
-            double rand = sRand.nextDouble();
-            cumulativeProb = 0;
-
-            for(int j = 0; j < tour.length; j++){
-                if(tour[j] == 0) continue; // skip over zero values
-                cumulativeProb += probs[j];
-                if(cumulativeProb >= rand){
-                    newTour[i] = tour[j];
-                    tour = removeAtIndex(tour, j);
-                    break;
-                }
-            }
+    public void swapValue(int[] array, int value) {
+        int i = 0;
+        while (i < array.length && array[i] != value) {
+            i++;
         }
-
-        // Set the new tour
-        tour = newTour;
+        if (i < array.length) {
+            int tempVal = array[0];
+            array[0] = value;
+            array[i] = tempVal;
+        }
     }
 
 
@@ -216,9 +179,9 @@ public class VBSS {
         int best = Integer.MAX_VALUE;
         //Generate a random tour or else the default tour from 1,2,3... etc. will be the tour
         generateNewTour();
+        best = getTourCost();
         for(int i = 0; i < iterations; i++){
             vbssNewTour();
-            printTour();
             int temp = getTourCost();
             if(temp < best){
                 best = temp;
