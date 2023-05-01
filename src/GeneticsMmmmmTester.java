@@ -34,6 +34,25 @@ public class GeneticsMmmmmTester {
         for (int i = 0; i < poo.length; i++){
             System.out.println(poo[i][0] + " " + poo[i][1]);
         }
+
+        System.out.println("Array manipulation test");
+
+        double[] probabilities = { .35, .30, .25, .10};
+
+
+        double sum = 0;
+        for (int i = 0; i < probabilities.length; i++){
+            for (int j = i + 1; j < probabilities.length; j++){
+                sum += probabilities[j];
+            }
+            probabilities[i] = sum;
+            sum = 0;
+        }
+
+        System.out.println("Works?");
+        for (int i = 0; i < probabilities.length; i++){
+            System.out.println(probabilities[i]);
+        }
     }
 
     public static int[] getArray(){
