@@ -6,8 +6,15 @@ public class VBSS {
     private final SplittableRandom sRand;
     private final double[] xValues;
     private final double[] yValues;
-    private int B;
+    private final int B;
 
+    /**
+     * Constructor that accepts 4 parameters of importance.
+     * @param numCities - The number of cities
+     * @param B - The to raise heuristic values to
+     * @param xValues - The X values for each city
+     * @param yValues - The Y Values for each city
+     */
     public VBSS(int numCities, int B, double[] xValues, double[] yValues){
         this.tour = new int[numCities];
         this.sRand = new SplittableRandom();
@@ -20,6 +27,10 @@ public class VBSS {
 
     }
 
+    /**
+     * Generate a new random tour. Used primarily once to make sure the default starting tour
+     * isn't 1,2,3,4, etc.
+     */
     public void generateNewTour(){
         for(int i = 0; i < tour.length; i++){
             int randIndex1 = sRand.nextInt(tour.length);
@@ -64,6 +75,12 @@ public class VBSS {
         return (int)Math.round(Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)));
     }
 
+    /**
+     * Distance based heuristic that assigns a 'rank' to each city in the tour.
+     * The heuristic uses the very FIRST city in the tour as the bases for assigning values to every other city
+     * Calculates distance from FIRST city to every other city and rank is closest = 1 farthest = (num > 1)
+     * @return An array of the heuristic values for each index based on distance form FIRST city
+     */
     public int[] getHeuristic(){
         int[] costs = new int[tour.length];
         int[] ranks = new int[tour.length];
@@ -82,6 +99,11 @@ public class VBSS {
         return ranks;
     }
 
+    /**
+     * The sum of the heuristic inverses used for further calculations
+     * @param rank The heuristic values that get inverted and then summed
+     * @return The double that is the sum of the heuristic inverses
+     */
     public double getHeuristicInverseSum(int[] rank){
         double inverseSum = 0;
         //Skip the first value since its always zero
@@ -91,6 +113,11 @@ public class VBSS {
         return inverseSum;
     }
 
+    /**
+     * Provides an array of heuristic values that are inverted for further calculations
+     * @param rank - The heuristic values to invert
+     * @return The inverted heuristic value array of doubles
+     */
     public double[] getHeuristicInverses(int[] rank){
         double[] inverses = new double[rank.length];
         for(int i = 1; i < rank.length; i++){
@@ -99,6 +126,11 @@ public class VBSS {
         return inverses;
     }
 
+    /**
+     * Gets the heuristic values, inverse heuristic values, and inverse heuristic sum and returns the probabilities
+     * i.e. 1/(inverse heuristic values)
+     * @return An array of the probabilities for each index based on heuristic inverses.
+     */
     public double[] setProbabilities(){
         int[] rank = getHeuristic();
         double[] inverses = getHeuristicInverses(rank);
@@ -111,6 +143,12 @@ public class VBSS {
         return probs;
     }
 
+    /**
+     * Remove the value at the index from the tour
+     * @param tour - The array where the value should be removed from.
+     * @param index - The index where to remove from the tour.
+     * @return - A new array that is the original array with the
+     */
     public int[] removeAtIndex(int[] tour, int index) {
         if (index < 0 || index >= tour.length) {
             throw new IndexOutOfBoundsException("Index " + index + " out of bounds for array of length " + tour.length);
@@ -128,35 +166,50 @@ public class VBSS {
     }
 
 
+    /**
+     * Method that performs the actual Value Biased Stochastic Sampling
+     */
     public void vbssNewTour(){
-        //Initializing an empty new tour
-        int[] newTour = new int[tour.length];
-        double cumulativeProb; //The cumulative probability
+        int[] newTour = new int[tour.length]; //Initializing an empty new tour
         double[] probs = setProbabilities(); //Determine the probabilities
+        double cumulativeProb; //The cumulative probability
+        //Loop through for the size of the tour
         for(int i = 0; i < newTour.length; i++){
-            double randNum = sRand.nextDouble();
+            double randNum = sRand.nextDouble(); //Generate a random number between [0.0, 1.0)
             cumulativeProb = 0;
+            //Loop through remaining cities
             for (int j = 0; j < tour.length; j++) {
+                //If the tour is only one city there is no need to do any more checking, simply add to end of newTour
                 if(tour.length == 1){
                     newTour[i] = tour[0];
                     break;
                 }
                 cumulativeProb += probs[j];
+                /*
+                Range check for the random number, if it falls within the range then that is the next city to base
+                heuristic off of.
+                 */
                 if (randNum < cumulativeProb && randNum > (cumulativeProb - probs[j])) {
                     int tempCityValue = tour[j];
                     newTour[i] = tour[0];
-                    this.tour = removeAtIndex(this.tour, 0);
-                    swapValue(this.tour,tempCityValue);
-                    probs = setProbabilities();
+                    this.tour = removeAtIndex(this.tour, 0); //Remove zeroth index since it's best city previously determined
+                    swapValue(this.tour,tempCityValue); //Swap next 'best' city with city at zeroth index
+                    probs = setProbabilities(); //Generate new probabilities based on the current remaining cities
                     break;
                 }
             }
         }
+        //Make the newTour the current tour as the current tour has been removed from
         this.tour = newTour;
     }
 
-
-    public void swapValue(int[] array, int value) {
+    /**
+     * Helper function to vbssNewTour method.
+     * Performs a swap of the value in the tour and the zeroth index
+     * @param array - The current tour essentially
+     * @param value - The value to swap with the zeroth index in the array
+     */
+    private void swapValue(int[] array, int value) {
         int i = 0;
         while (i < array.length && array[i] != value) {
             i++;
@@ -168,25 +221,33 @@ public class VBSS {
         }
     }
 
-
+    /**
+     * Prints the current tour
+     */
     public void printTour(){
         System.out.print(Arrays.toString(this.tour));
         System.out.println(tour.length);
     }
 
+    /**
+     * Run method created to allow for multiple iterations of VBSS
+     * Chooses the best value and array
+     * @param iterations
+     */
     public void run(int iterations){
-        int best = Integer.MAX_VALUE;
-        //Generate a random tour or else the default tour from 1,2,3... etc. will be the tour
+        //Generate a random tour or else the default tour is 1,2,3... etc. will be the tour
         generateNewTour();
-        best = getTourCost();
+        //Check the newly generated tour
+        int best = getTourCost();
+        int[] bestTour = new int[tour.length];
+        //Loop through iterations and assigning the least cost to best
         for(int i = 0; i < iterations; i++){
             vbssNewTour();
-            printTour();
             int temp = getTourCost();
             if(temp < best){
                 best = temp;
             }
         }
-        System.out.println(best);
+        System.out.println("The best solution cost: " + best);
     }
 }
